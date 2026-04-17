@@ -36,6 +36,8 @@
     "newPasswordPlaceholder": "New Password",
     "resetAndLogin": "Reset & Login",
     "backToSignIn": "Back to Sign In",
+    "enterPinToReset": "Enter your Backup PIN to reset your password.",
+    "backupPinLabel": "Backup PIN (6 digits)",
     "categories": {
       "edu": "Education (Schools, Teachers)",
       "water": "Water & Sanitation (Boreholes, Repairs)",
@@ -90,7 +92,10 @@
     "passwordConfirm": "Confirm New Password",
     "passwordHint": "Add a password to your account to prevent unauthorized access from other devices.",
     "updatePassword": "Update Password",
-    "setPassword": "Set Password"
+    "setPassword": "Set Password",
+    "editProfile": "Update Information",
+    "saveProfile": "Save Details",
+    "emailLabel": "Email Address"
   },
   "Common": {
     "success": "Success",
@@ -98,7 +103,7 @@
     "info": "Information",
     "warning": "Warning",
     "close": "Close",
-    "networkError": "Network Error. Please check your connection.",
+    "networkError": "Network error. Please check your internet connection.",
     "submissionSuccess": "Your need has been successfully submitted!",
     "submissionError": "There was an error submitting your need. Please try again.",
     "view": "View",
@@ -106,14 +111,21 @@
     "dateInfo": "Date: {date}",
     "passwordUpdated": "Password updated successfully!",
     "loginSuccess": "Signed in successfully!",
-    "loginError": "Account not found. Please register.",
-    "passwordRequired": "Enter password to continue",
-    "passwordTooShort": "Password must be at least 4 characters.",
-    "passwordsDoNotMatch": "Passwords do not match.",
-    "resetCodeSent": "Reset code sent to your phone.",
+    "loginError": "Invalid phone number or password. Please try again.",
+    "invalidpassword": "The password you entered is incorrect. Please try again.",
+    "invalidCredentials": "Invalid email or password.",
+    "passwordRequired": "Please enter your password to continue.",
+    "passwordTooShort": "Password must be at least 4 characters long.",
+    "passwordsDoNotMatch": "Passwords do not match. Please check and try again.",
+    "resetCodeSent": "A reset code has been sent to your phone.",
     "errorSendingCode": "Failed to send reset code. Please try again.",
     "passwordResetSuccess": "Password reset successfully! You are now logged in.",
-    "resetError": "Failed to reset password. Please check the code."
+    "resetError": "Failed to reset password. Please check the PIN/OTP or wait for the lockout period.",
+    "profileUpdated": "Profile updated successfully!",
+    "pinUpdated": "Backup PIN updated successfully!",
+    "pinTooShort": "Backup PIN must be exactly 6 digits.",
+    "errorUpdatingPin": "Failed to update Backup PIN.",
+    "accountLocked": "Too many failed attempts. Your account has been temporarily locked for security."
   },
   "Banner": {
     "messages": [

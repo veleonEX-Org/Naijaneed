@@ -1,5 +1,5 @@
 import express from 'express';
-import { registerOrLoginCandidate, loginCandidate, getCurrentUser, updateUserPassword, requestPasswordReset, resetPassword } from '../controllers/authController';
+import { registerOrLoginCandidate, loginCandidate, getCurrentUser, updateUserPassword, updateProfile, requestPasswordReset, resetPassword, updateBackupPin, resetPasswordWithPin } from '../controllers/authController';
 import { getPlatformConfig, updatePlatformConfig } from '../controllers/configController';
 import { submitNeed, getMyNeeds, getPublicMapData, reuploadMedia } from '../controllers/needsController';
 import { adminLogin, getAllNeedsAdmin, updateNeedStatus, getPartners, createPartner, getUsers, getAnalytics, exportNeedsCSV, updateAdminPassword } from '../controllers/adminController';
@@ -18,10 +18,13 @@ router.post('/admin/auth/login', adminLogin);
 router.post('/partner/auth/login', partnerLogin);
 router.post('/auth/forgot-password', requestPasswordReset);
 router.post('/auth/reset-password', resetPassword);
+router.post('/auth/reset-password-pin', resetPasswordWithPin);
 
 // Candidate Authenticated Routes
 router.get('/auth/me', authenticateUser, getCurrentUser);
+router.patch('/profile', authenticateUser, updateProfile);
 router.patch('/profile/password', authenticateUser, updateUserPassword);
+router.patch('/profile/pin', authenticateUser, updateBackupPin);
 router.post('/needs', optionalAuthenticateUser, uploadMedia.single('media'), submitNeed);
 router.post('/needs/:id/media', authenticateUser, uploadMedia.single('media'), reuploadMedia);
 router.get('/needs/mine', authenticateUser, getMyNeeds);

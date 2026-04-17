@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import api from '../lib/api';
 import { useSubmitNeed } from '../hooks/useNeeds';
-import { useCurrentUser, useLogin, useRequestReset, useResetPassword } from '../hooks/useCurrentUser';
+import { useCurrentUser, useLogin, useResetPasswordWithPin } from '../hooks/useCurrentUser';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 import Location from 'nigeria-geo';
@@ -33,12 +33,10 @@ export default function SubmitNeedForm() {
   const [password, setPassword] = useState('');
   const [showPasswordField, setShowPasswordField] = useState(false);
   const [isResetMode, setIsResetMode] = useState(false);
-  const [resetStep, setResetStep] = useState<'request' | 'verify'>('request');
-  const [resetOtp, setResetOtp] = useState('');
+  const [resetPin, setResetPin] = useState('');
   const [resetNewPassword, setResetNewPassword] = useState('');
   const loginMutation = useLogin();
-  const requestResetMutation = useRequestReset();
-  const resetPasswordMutation = useResetPassword();
+  const resetWithPinMutation = useResetPasswordWithPin();
 
   useEffect(() => {
     if (user) {
@@ -114,33 +112,20 @@ export default function SubmitNeedForm() {
     }
   };
 
-  const handleRequestReset = async () => {
-    if (!formData.phone) return;
-    setLoading(true);
-    try {
-      await requestResetMutation.mutateAsync(formData.phone);
-      success('resetCodeSent');
-      setResetStep('verify');
-    } catch (err: any) {
-      toastError(err.response?.data?.error || 'errorSendingCode');
-    } finally {
-      setLoading(false);
-    }
-  };
- 
   const handleResetPassword = async () => {
-    if (!resetOtp || !resetNewPassword) return;
+    if (!resetPin || resetPin.length < 6 || !resetNewPassword) return;
     setLoading(true);
     try {
-      await resetPasswordMutation.mutateAsync({ 
+      await resetWithPinMutation.mutateAsync({ 
         phone: formData.phone, 
-        otp: resetOtp, 
+        pin: resetPin, 
         newPassword: resetNewPassword 
       });
       success('passwordResetSuccess');
       setIsResetMode(false);
       setIsLoginMode(false);
-      setResetStep('request');
+      setResetPin('');
+      setResetNewPassword('');
     } catch (err: any) {
       toastError(err.response?.data?.error || 'resetError');
     } finally {
@@ -226,60 +211,45 @@ export default function SubmitNeedForm() {
                 </div>
               ) : isResetMode ? (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-bold">{t('resetPasswordTitle')}</h3>
-                  {resetStep === 'request' ? (
-                    <div className="space-y-4">
-                      <p className="text-sm text-gray-500">{t('enterPhoneForReset')}</p>
-                      <div className="flex flex-col md:flex-row gap-3">
-                        <input
-                          name="phone"
-                          value={formData.phone}
-                          placeholder="080 1234 5678"
-                          className="flex-1 p-2.5 md:p-3 rounded-xl border border-gray-200 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-green-500 outline-none transition-all"
-                          onChange={handleChange}
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={handleRequestReset}
-                          disabled={loading}
-                          className="px-6 py-2.5 md:py-3 bg-green-600 text-white font-bold rounded-xl shadow-lg hover:bg-green-700 transition-all flex items-center justify-center gap-2"
-                        >
-                          {loading ? <Loader2 className="animate-spin" size={20} /> : t('sendCode')}
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <p className="text-sm text-gray-500">{t('enterOtpHint')}</p>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <input
-                          type="text"
-                          value={resetOtp}
-                          onChange={(e) => setResetOtp(e.target.value)}
-                          placeholder={t('otpPlaceholder')}
-                          className="p-2.5 md:p-3 rounded-xl border border-gray-200 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-green-500 outline-none transition-all"
-                          required
-                        />
-                        <input
-                          type="password"
-                          value={resetNewPassword}
-                          onChange={(e) => setResetNewPassword(e.target.value)}
-                          placeholder={t('newPasswordPlaceholder')}
-                          className="p-2.5 md:p-3 rounded-xl border border-gray-200 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-green-500 outline-none transition-all"
-                          required
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleResetPassword}
-                        disabled={loading}
-                        className="w-full py-3 bg-green-600 text-white font-bold rounded-xl shadow-lg hover:bg-green-700 transition-all flex items-center justify-center gap-2"
-                      >
-                        {loading ? <Loader2 className="animate-spin" size={20} /> : t('resetAndLogin')}
-                      </button>
-                    </div>
-                  )}
+                <h3 className="text-lg font-bold">{t('resetPasswordTitle')}</h3>
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-500">{t('enterPinToReset')}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input
+                      name="phone"
+                      value={formData.phone}
+                      placeholder="Phone Number"
+                      className="p-2.5 md:p-3 rounded-xl border border-gray-200 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-green-500 outline-none transition-all"
+                      onChange={handleChange}
+                      required
+                    />
+                    <input
+                      type="password"
+                      value={resetPin}
+                      onChange={(e) => setResetPin(e.target.value)}
+                      placeholder={t('backupPinLabel')}
+                      maxLength={6}
+                      className="p-2.5 md:p-3 rounded-xl border border-gray-200 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-green-500 outline-none transition-all"
+                      required
+                    />
+                  </div>
+                  <input
+                    type="password"
+                    value={resetNewPassword}
+                    onChange={(e) => setResetNewPassword(e.target.value)}
+                    placeholder={t('newPasswordPlaceholder')}
+                    className="w-full p-2.5 md:p-3 rounded-xl border border-gray-200 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-green-500 outline-none transition-all"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={handleResetPassword}
+                    disabled={loading}
+                    className="w-full py-3 bg-green-600 text-white font-bold rounded-xl shadow-lg hover:bg-green-700 transition-all flex items-center justify-center gap-2"
+                  >
+                    {loading ? <Loader2 className="animate-spin" size={20} /> : t('resetAndLogin')}
+                  </button>
+                </div>
                   <button
                     type="button"
                     onClick={() => setIsResetMode(false)}

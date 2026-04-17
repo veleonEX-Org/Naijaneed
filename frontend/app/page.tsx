@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { useLocale } from '@/hooks/useLocale';
 import { useAppToast } from '@/hooks/useAppToast';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -98,6 +99,14 @@ export default function Home() {
 
         {/* Left: Hero copy */}
         <div className="flex flex-col justify-center items-center lg:items-start px-8 sm:px-16 pt-24 pb-12 lg:py-0 lg:w-[44%] lg:min-h-screen text-center lg:text-left">
+          <Image 
+            src="/images/logo.png" 
+            alt="NaijaNeed Logo" 
+            width={180} 
+            height={60} 
+            className="mb-8 h-12 w-auto object-contain"
+            priority
+          />
           <h1 className="text-5xl sm:text-6xl font-extrabold mb-4 tracking-tight bg-gradient-to-br from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 bg-clip-text text-transparent leading-tight">
             {t('title')}
           </h1>

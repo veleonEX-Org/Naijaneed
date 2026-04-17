@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { LayoutDashboard, ClipboardList, Users, Settings, LogOut, HeartHandshake, BarChart3, FileText, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -30,8 +31,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       {/* Sidebar */}
       <aside className="w-64 bg-white dark:bg-gray-800 shadow-xl hidden md:flex flex-col">
-        <div className="p-6 border-b dark:border-gray-700">
-          <h1 className="text-xl font-bold text-green-600">NaijaNeed Admin</h1>
+        <div className="p-6 border-b dark:border-gray-700 flex items-center justify-center">
+          <Image 
+            src="/images/logo.png" 
+            alt="NaijaNeed Admin" 
+            width={140} 
+            height={40} 
+            className="h-8 w-auto object-contain"
+          />
         </div>
         
         <nav className="flex-1 p-4 space-y-2">

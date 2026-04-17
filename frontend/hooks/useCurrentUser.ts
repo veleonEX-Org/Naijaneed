@@ -11,6 +11,7 @@ export interface UserProfile {
   area?: string;
   is_admin?: boolean;
   hasPassword?: boolean;
+  hasBackupPin?: boolean;
 }
 
 export const useCurrentUser = () => {
@@ -53,6 +54,34 @@ export const useResetPassword = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: any) => api.post('/api/auth/reset-password', data).then(r => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+    },
+  });
+};
+export const useUpdateProfile = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Partial<UserProfile>) => api.patch('/api/profile', data).then(r => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+    },
+  });
+};
+export const useUpdateBackupPin = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (pin: string) => api.patch('/api/profile/pin', { pin }).then(r => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+    },
+  });
+};
+
+export const useResetPasswordWithPin = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: any) => api.post('/api/auth/reset-password-pin', data).then(r => r.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['currentUser'] });
     },

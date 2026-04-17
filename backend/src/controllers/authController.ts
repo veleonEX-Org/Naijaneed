@@ -107,6 +107,14 @@ export const loginCandidate = async (req: Request, res: Response) => {
 
     // If user has a password set, they MUST provide it
     if (user.password) {
+      // Rate Limiting Check
+      if (user.lockout_until && new Date(user.lockout_until) > new Date()) {
+        const remaining = Math.ceil((new Date(user.lockout_until).getTime() - new Date().getTime()) / 1000);
+        return res.status(403).json({ 
+          error: `Account locked due to too many failed attempts. Try again in ${remaining} seconds or contact support.` 
+        });
+      }
+
       if (!password) {
         return res.status(401).json({ 
           error: 'Password required.', 
@@ -116,8 +124,22 @@ export const loginCandidate = async (req: Request, res: Response) => {
 
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
-        return res.status(401).json({ error: 'Invalid password.' });
+        const newAttempts = (user.failed_attempts || 0) + 1;
+        let lockoutUntil = null;
+        if (newAttempts >= 5) {
+          lockoutUntil = new Date(Date.now() + 30 * 1000); // 30 seconds lockout
+        }
+        await db.query('UPDATE users SET failed_attempts = $1, lockout_until = $2 WHERE id = $3', [newAttempts, lockoutUntil, user.id]);
+        
+        return res.status(401).json({ 
+          error: newAttempts >= 5 
+            ? 'Too many failed attempts. Account locked for 30 seconds. Please contact support.' 
+            : `Invalid password. Attempt ${newAttempts} of 5.` 
+        });
       }
+
+      // Success: Reset failed attempts
+      await db.query('UPDATE users SET failed_attempts = 0, lockout_until = NULL WHERE id = $1', [user.id]);
     }
 
     const deviceToken = user.device_token || uuidv4();
@@ -156,9 +178,11 @@ export const loginCandidate = async (req: Request, res: Response) => {
 
 export const getCurrentUser = (req: Request, res: Response) => {
   if (!req.user) return res.status(401).json({ error: 'Not authenticated.' });
+  const user = req.user as any;
   return res.status(200).json({
-    ...req.user,
-    hasPassword: !!(req.user as any).password
+    ...user,
+    hasPassword: !!user.password,
+    hasBackupPin: !!user.backup_pin
   });
 };
 
@@ -178,6 +202,42 @@ export const updateUserPassword = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Update password error:', error);
     return res.status(500).json({ error: 'Failed to update password.' });
+  }
+};
+
+export const updateProfile = async (req: Request, res: Response) => {
+  const { name, email, stateId, lgaId, area } = req.body;
+  const userId = (req.user as any).id;
+
+  try {
+    const updateQuery = `
+      UPDATE users 
+      SET name = COALESCE($1, name), 
+          email = COALESCE($2, email), 
+          state_id = COALESCE($3, state_id), 
+          lga_id = COALESCE($4, lga_id), 
+          area = COALESCE($5, area)
+      WHERE id = $6
+      RETURNING *
+    `;
+    const updateResult = await db.query(updateQuery, [name, email, stateId, lgaId, area, userId]);
+    const user = updateResult.rows[0];
+
+    return res.status(200).json({
+      message: 'Profile updated successfully.',
+      user: {
+        id: user.id,
+        name: user.name,
+        phone: user.phone,
+        email: user.email,
+        stateId: user.state_id,
+        lgaId: user.lga_id,
+        area: user.area
+      }
+    });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    return res.status(500).json({ error: 'Failed to update profile.' });
   }
 };
 
@@ -236,6 +296,89 @@ export const resetPassword = async (req: Request, res: Response) => {
     return res.status(200).json({ message: 'Password reset successfully. You are now logged in.' });
   } catch (error) {
     console.error('Reset password error:', error);
+    return res.status(500).json({ error: 'Failed to reset password.' });
+  }
+};
+
+export const updateBackupPin = async (req: Request, res: Response) => {
+  const { pin } = req.body;
+  const userId = (req.user as any).id;
+
+  if (!pin || pin.length < 6 || !/^\d+$/.test(pin)) {
+    return res.status(400).json({ error: 'Backup PIN must be at least 6 digits.' });
+  }
+
+  try {
+    const hashedPin = await bcrypt.hash(pin, 10);
+    await db.query('UPDATE users SET backup_pin = $1 WHERE id = $2', [hashedPin, userId]);
+
+    return res.status(200).json({ message: 'Backup PIN updated successfully.' });
+  } catch (error) {
+    console.error('Update backup PIN error:', error);
+    return res.status(500).json({ error: 'Failed to update backup PIN.' });
+  }
+};
+
+export const resetPasswordWithPin = async (req: Request, res: Response) => {
+  const { phone, pin, newPassword } = req.body;
+
+  if (!phone || !pin || !newPassword) {
+    return res.status(400).json({ error: 'Phone, Backup PIN, and new password are required.' });
+  }
+
+  try {
+    const findResult = await db.query('SELECT * FROM users WHERE phone = $1 LIMIT 1', [phone]);
+    const user = findResult.rows[0];
+
+    if (!user) {
+      return res.status(404).json({ error: 'Account not found.' });
+    }
+
+    if (!user.backup_pin) {
+      return res.status(400).json({ error: 'No backup PIN set for this account. Please contact support.' });
+    }
+
+    // Rate Limiting Check
+    if (user.lockout_until && new Date(user.lockout_until) > new Date()) {
+      const remaining = Math.ceil((new Date(user.lockout_until).getTime() - new Date().getTime()) / 1000);
+      return res.status(403).json({ 
+        error: `Action locked due to too many failed attempts. Try again in ${remaining} seconds.` 
+      });
+    }
+
+    const isMatch = await bcrypt.compare(pin, user.backup_pin);
+    if (!isMatch) {
+      const newAttempts = (user.failed_attempts || 0) + 1;
+      let lockoutUntil = null;
+      if (newAttempts >= 5) {
+        lockoutUntil = new Date(Date.now() + 30 * 1000);
+      }
+      await db.query('UPDATE users SET failed_attempts = $1, lockout_until = $2 WHERE id = $3', [newAttempts, lockoutUntil, user.id]);
+      
+      return res.status(401).json({ 
+        error: newAttempts >= 5 
+          ? 'Too many failed attempts. Account locked for 30 seconds. Please contact support.' 
+          : `Invalid PIN. Attempt ${newAttempts} of 5.` 
+      });
+    }
+
+    // Reset password & clean lockout
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const deviceToken = uuidv4();
+    
+    await db.query('UPDATE users SET password = $1, device_token = $2, failed_attempts = 0, lockout_until = NULL WHERE id = $3', [hashedPassword, deviceToken, user.id]);
+
+    res.cookie('nn_device', deviceToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 365 * 24 * 60 * 60 * 1000
+    });
+
+    return res.status(200).json({ message: 'Password reset successfully with Backup PIN. You are now logged in.' });
+  } catch (error) {
+    console.error('Reset password with PIN error:', error);
     return res.status(500).json({ error: 'Failed to reset password.' });
   }
 };

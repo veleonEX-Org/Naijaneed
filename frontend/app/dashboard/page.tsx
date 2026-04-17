@@ -4,6 +4,8 @@ import { useState, useMemo } from 'react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useMyNeeds } from '@/hooks/useNeeds';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect } from 'react';
 import ThemeToggle from '@/components/ThemeToggle';
 import NeedDetailPanel from '@/components/NeedDetailPanel';
@@ -106,9 +108,15 @@ export default function Dashboard() {
             >
               <ChevronLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
             </button>
-            <span className="font-extrabold text-xl bg-gradient-to-r from-green-600 to-emerald-500 bg-clip-text text-transparent">
-              NaijaNeed
-            </span>
+            <Link href="/" className="flex items-center gap-2">
+              <Image 
+                src="/images/logo.png" 
+                alt="NaijaNeed" 
+                width={120} 
+                height={40} 
+                className="h-8 w-auto object-contain"
+              />
+            </Link>
           </div>
 
           {/* Right: lang dropdown + theme + greeting */}

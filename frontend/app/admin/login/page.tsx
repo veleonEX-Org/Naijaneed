@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import api from '@/lib/api';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Lock, Mail } from 'lucide-react';
 
 export default function AdminLogin() {
@@ -35,8 +36,15 @@ export default function AdminLogin() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-6">
       <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800">
         <div className="p-10">
-          <div className="text-center mb-10">
-            <h1 className="text-3xl font-bold text-green-600 mb-2">NaijaNeed Admin</h1>
+          <div className="flex flex-col items-center mb-10">
+            <Image 
+              src="/images/logo.png" 
+              alt="NaijaNeed" 
+              width={200} 
+              height={60} 
+              className="h-12 w-auto object-contain mb-2"
+              priority
+            />
             <p className="text-gray-500 dark:text-gray-400">Secure operator portal</p>
           </div>
 
