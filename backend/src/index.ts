@@ -59,7 +59,7 @@ app.use('/api', routes);
 
 // Basic Route
 app.get('/', (req, res) => {
-  res.json({ message: 'NaijaNeed API Running' });
+  res.json({ message: 'NaijaNeed API Running - v1.0.2' });
 });
 
 // Start Server

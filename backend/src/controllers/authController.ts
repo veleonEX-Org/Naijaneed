@@ -104,7 +104,10 @@ export const loginCandidate = async (req: Request, res: Response) => {
     const user = findResult.rows[0];
 
     if (!user) {
-      return res.status(401).json({ error: 'Account not found. Please register first.' });
+      return res.status(401).json({ 
+        error: 'CANDIDATE_LOGIN_NOT_FOUND', 
+        message: 'Account not found. Please register first.' 
+      });
     }
 
     const { password } = req.body;
