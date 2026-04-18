@@ -98,26 +98,19 @@ export default function Home() {
       <div className="flex flex-col lg:flex-row flex-1 min-h-screen">
 
         {/* Left: Hero copy */}
-        <div className="flex flex-col justify-center items-center lg:items-start px-8 sm:px-16 pt-24 pb-12 lg:py-0 lg:w-[44%] lg:min-h-screen text-center lg:text-left">
-          <Image 
-            src="/images/logo.png" 
-            alt="NaijaNeed Logo" 
-            width={180} 
-            height={60} 
-            className="mb-8 h-12 w-auto object-contain"
-            priority
-          />
+        <div className="flex flex-col justify-center items-center lg:items-start px-8 sm:px-16 pt-24 md:pb-12 lg:py-0 lg:w-[44%] lg:min-h-screen text-center lg:text-left">
+         
           <h1 className="text-5xl sm:text-6xl font-extrabold mb-4 tracking-tight bg-gradient-to-br from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 bg-clip-text text-transparent leading-tight">
             {t('title')}
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-400 mb-10">
+          <p className="text-xl text-gray-600 dark:text-gray-400 md:mb-10 mb-4">
             &ldquo;{t('tagline')}&rdquo;
           </p>
 
           <div className="flex flex-col space-y-4 w-full sm:w-auto items-center lg:items-start">
             <Link
               href="/submit"
-              className="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-5 px-10 rounded-full text-lg transition-all transform hover:scale-105 shadow-xl hover:shadow-2xl active:scale-95 text-center"
+              className="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-5 px-10 rounded-full md:text-lg text-sm transition-all transform hover:scale-105 shadow-xl hover:shadow-2xl active:scale-95 text-center"
             >
               {t('cta')}
             </Link>
@@ -132,13 +125,13 @@ export default function Home() {
             )}
           </div>
 
-          <p className="md:mt-12 mt-6 text-sm text-gray-400 italic font-medium">
+          <p className="md:mt-12 mt-4 text-sm text-gray-400 italic font-medium">
             {t('mission')}
           </p>
         </div>
 
         {/* Right: Nigeria Map */}
-        <div className="flex-1 lg:min-h-screen h-72 lg:h-auto bg-gray-50 dark:bg-gray-800/50 relative border-4 border-red-500">
+        <div className="flex-1 lg:min-h-screen h-[480px] lg:h-auto bg-gray-50 dark:bg-gray-800/50 relative ">
           <div className="absolute inset-0 m-4 lg:m-6 rounded-3xl overflow-hidden shadow-xl border border-gray-100 dark:border-gray-700 ">
             <NigeriaMap />
           </div>

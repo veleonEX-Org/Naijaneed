@@ -26,7 +26,7 @@ export const registerOrLoginCandidate = async (req: Request, res: Response) => {
       // If user has a password, they should use the login path
       if (existingUser.password) {
         return res.status(401).json({ 
-          error: 'This phone number is registered with a password. Please sign in instead.',
+          error: 'passwordRequired',
           requiresPassword: true 
         });
       }
@@ -111,7 +111,8 @@ export const loginCandidate = async (req: Request, res: Response) => {
       if (user.lockout_until && new Date(user.lockout_until) > new Date()) {
         const remaining = Math.ceil((new Date(user.lockout_until).getTime() - new Date().getTime()) / 1000);
         return res.status(403).json({ 
-          error: `Account locked due to too many failed attempts. Try again in ${remaining} seconds or contact support.` 
+          error: 'accountLocked',
+          remaining
         });
       }
 
@@ -132,9 +133,8 @@ export const loginCandidate = async (req: Request, res: Response) => {
         await db.query('UPDATE users SET failed_attempts = $1, lockout_until = $2 WHERE id = $3', [newAttempts, lockoutUntil, user.id]);
         
         return res.status(401).json({ 
-          error: newAttempts >= 5 
-            ? 'Too many failed attempts. Account locked for 30 seconds. Please contact support.' 
-            : `Invalid password. Attempt ${newAttempts} of 5.` 
+          error: newAttempts >= 5 ? 'accountLocked' : 'invalidpassword',
+          attempts: newAttempts
         });
       }
 
@@ -342,7 +342,8 @@ export const resetPasswordWithPin = async (req: Request, res: Response) => {
     if (user.lockout_until && new Date(user.lockout_until) > new Date()) {
       const remaining = Math.ceil((new Date(user.lockout_until).getTime() - new Date().getTime()) / 1000);
       return res.status(403).json({ 
-        error: `Action locked due to too many failed attempts. Try again in ${remaining} seconds.` 
+        error: 'accountLocked',
+        remaining
       });
     }
 
@@ -356,9 +357,8 @@ export const resetPasswordWithPin = async (req: Request, res: Response) => {
       await db.query('UPDATE users SET failed_attempts = $1, lockout_until = $2 WHERE id = $3', [newAttempts, lockoutUntil, user.id]);
       
       return res.status(401).json({ 
-        error: newAttempts >= 5 
-          ? 'Too many failed attempts. Account locked for 30 seconds. Please contact support.' 
-          : `Invalid PIN. Attempt ${newAttempts} of 5.` 
+        error: newAttempts >= 5 ? 'accountLocked' : 'invalidpassword',
+        attempts: newAttempts
       });
     }
 

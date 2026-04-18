@@ -90,6 +90,19 @@ export default function SubmitNeedForm() {
     }
   };
 
+  // Known i18n-friendly error codes returned by the backend
+  const KNOWN_ERROR_CODES = new Set([
+    'invalidpassword', 'accountLocked', 'loginError', 'passwordRequired',
+    'resetError', 'networkError', 'submissionError',
+  ]);
+
+  const resolveErrorKey = (errCode?: string) => {
+    if (!errCode) return 'loginError';
+    if (KNOWN_ERROR_CODES.has(errCode)) return errCode;
+    // Unknown raw string from backend – fall back to generic login error
+    return 'loginError';
+  };
+
   const handleLogin = async (e: any) => {
     e.preventDefault();
     if (!formData.phone) return;
@@ -105,7 +118,7 @@ export default function SubmitNeedForm() {
         setShowPasswordField(true);
         toastError('passwordRequired');
       } else {
-        toastError(err.response?.data?.error || 'loginError');
+        toastError(resolveErrorKey(err.response?.data?.error));
       }
     } finally {
       setLoading(false);
@@ -127,7 +140,7 @@ export default function SubmitNeedForm() {
       setResetPin('');
       setResetNewPassword('');
     } catch (err: any) {
-      toastError(err.response?.data?.error || 'resetError');
+      toastError(resolveErrorKey(err.response?.data?.error) || 'resetError');
     } finally {
       setLoading(false);
     }

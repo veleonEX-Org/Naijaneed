@@ -3,7 +3,17 @@
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useEffect, useState } from 'react';
+import L from 'leaflet';
 import api from '@/lib/api';
+
+// Fix Leaflet's broken default icon paths in Next.js / webpack environments
+// This prevents the "Cannot read properties of undefined (reading 'appendChild')" crash
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
 
 interface Dot {
   id: number;
@@ -54,49 +64,45 @@ const STATE_COORDINATES: Record<string, [number, number]> = {
 };
 
 export default function NigeriaMap() {
-  const [isClient, setIsClient] = useState(false);
   const [densityData, setDensityData] = useState<Dot[]>([]);
 
   useEffect(() => {
-    setIsClient(true);
+    const fetchData = async () => {
+      try {
+        const res = await api.get('/api/needs/map');
+        if (res.status === 200 || res.status === 304) {
+          const data = res.data;
+          const mappedData: Dot[] = data.map((item: any) => ({
+            id: item.state,
+            pos: STATE_COORDINATES[item.state] || [9.0820, 8.6753],
+            label: item.state,
+            needs: parseInt(item.needs, 10),
+          }));
+          setDensityData(mappedData);
+        }
+      } catch (error) {
+        console.error("Failed to fetch map data", error);
+      }
+    };
+
     fetchData();
   }, []);
 
-  const fetchData = async () => {
-    try {
-      const res = await api.get('/api/needs/map');
-      if (res.status === 200 || res.status === 304) {
-        const data = res.data;
-        const mappedData: Dot[] = data.map((item: any) => ({
-          id: item.state,
-          pos: STATE_COORDINATES[item.state] || [9.0820, 8.6753], // Fallback to center of Nigeria
-          label: item.state,
-          needs: parseInt(item.needs, 10),
-        }));
-        setDensityData(mappedData);
-      }
-    } catch (error) {
-      console.error("Failed to fetch map data", error);
-    }
-  };
-
-  if (!isClient) return <div className="h-full w-full bg-gray-100 animate-pulse rounded-3xl" />;
-
   return (
-    <div className="h-full w-full rounded-2xl overflow-hidden shadow-inner relative z-0">
-      <MapContainer 
-        center={[9.0820, 8.6753]} 
-        zoom={6} 
+    <div className="h-full w-full rounded-2xl overflow-hidden shadow-inner relative z-0" style={{ minHeight: '288px' }}>
+      <MapContainer
+        center={[9.0820, 8.6753]}
+        zoom={6}
         scrollWheelZoom={false}
-        className="h-full w-full"
+        style={{ height: '100%', width: '100%', minHeight: '288px' }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        
+
         {densityData.map((dot) => (
-          <CircleMarker 
+          <CircleMarker
             key={dot.id}
             center={dot.pos}
             radius={Math.min(Math.max(Math.sqrt(dot.needs) * 2, 5), 30)}
